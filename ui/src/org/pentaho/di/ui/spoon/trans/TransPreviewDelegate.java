@@ -22,6 +22,8 @@
 
 package org.pentaho.di.ui.spoon.trans;
 
+import com.vividsolutions.jts.geom.Point;
+import com.vividsolutions.jts.geom.Polygon;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.CTabItem;
 import org.eclipse.swt.events.SelectionAdapter;
@@ -332,7 +334,22 @@ public class TransPreviewDelegate extends SpoonDelegate implements XulEventHandl
             Object nativeType = valueMetaInterface.convertBinaryStringToNativeType( (byte[]) rowData[colNr] );
             string = valueMetaInterface.getStorageMetadata().getString( nativeType );
           } else {
-            string = rowMeta.getString( rowData, colNr );
+            if(rowMeta.getValueMeta( colNr ).getType() == 436 ){
+              if(rowData != null){
+                "GEOM".intern();
+                string = "GEOM";
+                if(rowData[colNr] instanceof Polygon){
+                  string = "POLY";
+                } else if ( rowData[colNr] instanceof Point ){
+                  string = "POINT";
+                }
+              } else {
+                string = null;
+              }
+            } else {
+              string = rowMeta.getString( rowData, colNr );
+            }
+
           }
         } catch ( Exception e ) {
           string = "Conversion error: " + e.getMessage();
@@ -340,7 +357,11 @@ public class TransPreviewDelegate extends SpoonDelegate implements XulEventHandl
         if ( string == null ) {
           item.setText( colNr + 1, "<null>" );
           item.setForeground( colNr + 1, GUIResource.getInstance().getColorBlue() );
-        } else {
+        } else if ( string.equals("POLY") || string.equals("POINT") || string.equals("GEOM")) {
+          item.setText( colNr + 1, string);
+          item.setForeground( colNr + 1, GUIResource.getInstance().getColorGreen());
+        }
+        else {
           item.setText( colNr + 1, string );
         }
       }

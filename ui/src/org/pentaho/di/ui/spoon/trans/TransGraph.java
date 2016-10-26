@@ -752,9 +752,10 @@ public class TransGraph extends AbstractGraph implements XulEventHandler, Redraw
       }
     } );
   }
-
+  boolean doubleClick;
   @Override
   public void mouseDoubleClick( MouseEvent e ) {
+    doubleClick = true;
     clearSettings();
 
     Point real = screen2real( e.x, e.y );
@@ -899,6 +900,7 @@ public class TransGraph extends AbstractGraph implements XulEventHandler, Redraw
             break;
 
           case STEP_ICON:
+            doubleClick = false;
             stepMeta = (StepMeta) areaOwner.getOwner();
             currentStep = stepMeta;
 
@@ -917,8 +919,14 @@ public class TransGraph extends AbstractGraph implements XulEventHandler, Redraw
                     stepListener.onSelect( currentStep );
                   }
                 }
-
-                transPreviewDelegate.refreshView();
+                Display.getDefault().timerExec(Display.getDefault().getDoubleClickTime(), new Runnable() {
+                  @Override
+                  public void run() {
+                    if(!doubleClick){
+                      transPreviewDelegate.refreshView();
+                    }
+                  }
+                });
               }
             }
             // ALT-Click: edit error handling
