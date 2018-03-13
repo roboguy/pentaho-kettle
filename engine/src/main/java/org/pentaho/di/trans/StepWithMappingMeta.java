@@ -51,7 +51,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * This class is supposed to use in steps where the mapping to sub transformations takes place
+ * This class is supposed to be used in steps where the mapping to sub transformations takes place
  *
  * @since 02-jan-2017
  * @author Yury Bakhmutski
@@ -76,10 +76,10 @@ public abstract class StepWithMappingMeta extends BaseSerializingMeta implements
     TransMeta mappingTransMeta = null;
 
     CurrentDirectoryResolver r = new CurrentDirectoryResolver();
-    // send parentVariables = null we don't need it here for resolving resolveCurrentDirectory.
+
     // Otherwise we destroy child variables and the option "Inherit all variables from the transformation" is enabled always.
     VariableSpace tmpSpace =
-      r.resolveCurrentDirectory( executorMeta.getSpecificationMethod(), null, rep, executorMeta.getParentStepMeta(),
+      r.resolveCurrentDirectory( executorMeta.getSpecificationMethod(), space, rep, executorMeta.getParentStepMeta(),
         executorMeta.getFileName() );
 
     switch ( executorMeta.getSpecificationMethod() ) {

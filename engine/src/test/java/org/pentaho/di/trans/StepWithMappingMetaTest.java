@@ -40,6 +40,8 @@ import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
+import javax.mail.Folder;
+
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyBoolean;
@@ -178,6 +180,63 @@ public class StepWithMappingMetaTest {
     Assert.assertEquals( parentValue, transMeta.getVariable( parentParam ) );
   }
 
+
+  @Test
+  @PrepareForTest( StepWithMappingMeta.class )
+  public void loadMappingMetaWithVariablesTest() throws Exception {
+    String variablePath = "Internal.Entry.Current.Directory";
+    String userDefinedKTRFileVar = "Transformation.File.Name";
+    String fileName = "testTrans"; //without extension .ktr
+    String userDefinedVariableFolder = "Folder.Name";
+    String virtualDir = "/testFolder/CDA-91";
+
+
+    VariableSpace variables = new Variables();
+    variables.setVariable( userDefinedVariableFolder, virtualDir );
+    variables.setVariable( userDefinedKTRFileVar, fileName );
+
+    StepMeta stepMeta = new StepMeta();
+    TransMeta parentTransMeta = new TransMeta();
+    stepMeta.setParentTransMeta( parentTransMeta );
+
+    RepositoryDirectoryInterface repositoryDirectory = Mockito.mock( RepositoryDirectoryInterface.class );
+    when( repositoryDirectory.toString() ).thenReturn( virtualDir );
+    stepMeta.getParentTransMeta().setRepositoryDirectory( repositoryDirectory );
+
+
+    StepWithMappingMeta mappingMetaMock = mock( StepWithMappingMeta.class );
+    when( mappingMetaMock.getSpecificationMethod() ).thenReturn( ObjectLocationSpecificationMethod.FILENAME );
+    when( mappingMetaMock.getFileName() ).thenReturn( "${" + variablePath + "}/" + "${" + userDefinedKTRFileVar + "}" );
+    when( mappingMetaMock.getParentStepMeta() ).thenReturn( stepMeta );
+
+    // mock repo and answers
+    Repository rep = mock( Repository.class );
+
+    Mockito.doAnswer( new Answer<TransMeta>() {
+      @Override
+      public TransMeta answer( final InvocationOnMock invocation ) throws Throwable {
+        final String originalArgument = (String) ( invocation.getArguments() )[ 0 ];
+        // be sure that the variable was replaced by real path
+        assertEquals( virtualDir, originalArgument );
+        return null;
+      }
+    } ).when( rep ).findDirectory( anyString() );
+
+    Mockito.doAnswer( new Answer<TransMeta>() {
+      @Override
+      public TransMeta answer( final InvocationOnMock invocation ) throws Throwable {
+        final String originalArgument = (String) ( invocation.getArguments() )[ 0 ];
+        // be sure that transformation name was resolved correctly even when user defined variables are used
+        assertEquals( fileName, originalArgument );
+        return mock( TransMeta.class );
+      }
+    } ).when( rep ).loadTransformation( anyString(), any( RepositoryDirectoryInterface.class ),
+        any( ProgressMonitorListener.class ), anyBoolean(), anyString() );
+
+
+    StepWithMappingMeta.loadMappingMeta( mappingMetaMock, rep, null, variables, true );
+
+  }
 
 
   @Test
